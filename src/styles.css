@@ -1,0 +1,53 @@
+.openlens-log-controls {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 280px;
+  z-index: 9999;
+  background: rgba(24, 24, 28, 0.95);
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  backdrop-filter: blur(2px);
+}
+
+.openlens-log-controls .title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.openlens-log-controls .row {
+  display: flex;
+  gap: 6px;
+}
+
+.openlens-log-controls input {
+  flex: 1;
+  min-width: 0;
+}
+
+.openlens-log-controls .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.openlens-log-controls .chip {
+  border: 1px solid #5f6368;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.lvl-trace { color: #9aa0a6 !important; }
+.lvl-debug { color: #8ab4f8 !important; }
+.lvl-info { color: #34a853 !important; }
+.lvl-warn { color: #fbbc04 !important; }
+.lvl-error { color: #ea4335 !important; }
+.lvl-fatal { color: #ff6d00 !important; font-weight: 700 !important; }
+.lvl-unknown { color: inherit; }
