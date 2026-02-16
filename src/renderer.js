@@ -16,3 +16,4 @@ class PodLogControlsRendererExtension extends LensRendererExtension {
 }
 
 module.exports = PodLogControlsRendererExtension;
+module.exports.default = PodLogControlsRendererExtension;

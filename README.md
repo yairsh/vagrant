@@ -1,55 +1,50 @@
 # OpenLens Pod Log Controls Plugin (OpenLens 6.5.2-366)
 
-This repository was cleaned up to fix a bad merge that left both TypeScript and JavaScript variants.
-The current committed code is now **single-path JavaScript only**.
+Understood — you mean OpenLens gets stuck during **install**.
 
-## What it does
+This update adds install-compat fixes and stronger verification before you try installing:
 
-- Colorizes pod log lines by level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`).
-- Adds a multi-term hide filter panel (`Log Filters`).
-- Applies to both old lines and newly streamed lines.
+- CommonJS + `default` exports for extension entry classes (improves loader compatibility).
+- `npm run verify` now checks export shape + package contents.
+- Recommended `.tgz` install flow (faster and less likely to hang than folder install).
 
-## Clean project layout (after merge fix)
+## Install steps (recommended)
 
-- `src/main.js` - OpenLens main extension entry.
-- `src/renderer.js` - OpenLens renderer extension entry.
-- `src/log-levels.js` - level detection + line-hide matching.
-- `src/pod-log-enhancer.js` - DOM observer, filter UI, live stream handling.
-
-## Recommended install path (fast, avoids "stuck" folder installs)
-
-If OpenLens feels stuck when installing from a folder, install a small packaged tarball instead:
-
-1. Create bundle:
+1. Build package tarball:
 
    ```bash
    npm run bundle
    ```
 
-2. This creates `dist-bundle/openlens-pod-log-controls-<version>.tgz`.
-3. In OpenLens, go to **Extensions** -> **Install from file**.
-4. Select the generated `.tgz` file.
+2. In OpenLens: **Extensions** -> **Install from file**.
+3. Pick `dist-bundle/openlens-pod-log-controls-0.3.3.tgz`.
 
-This is usually faster and more reliable than selecting a folder directly.
+## How to verify before install
 
-## Direct folder install (if you still prefer it)
+```bash
+npm run verify
+```
 
-1. Open OpenLens 6.5.2-366.
-2. Go to **Extensions** -> **Install from file** (or local folder).
-3. Select this project folder.
-4. Open any Pod logs view.
-5. Use **Log Filters**:
-   - type a word and click **Add** (or Enter) to hide matching lines
-   - click a chip (`term ×`) to remove a filter
+It checks:
+- JS syntax
+- runtime helper behavior
+- extension export compatibility (`module.exports` + `.default`)
+- tarball generation
+- required files in tarball
 
-## Commands (optional)
+## If OpenLens still hangs while installing
 
-- `npm run build` -> no-op (prints message only)
-- `npm run check` -> lightweight JS load check
-- `npm run bundle` -> creates installable `.tgz` package
+1. Restart OpenLens fully.
+2. Delete previous failed version from Extensions page (if listed).
+3. Re-run `npm run bundle` and install the new `.tgz`.
+4. Check OpenLens logs from terminal launch:
+   - Linux: run `openlens` in terminal and watch errors during install.
 
-## Persistence
+## Runtime verification in OpenLens
 
-Hide terms are saved in local storage key:
-
-- `openlens-log-hidden-terms`
+After successful install:
+1. Open a pod logs tab.
+2. Add filter term `healthcheck`.
+3. Confirm old matching lines hide.
+4. Confirm new streaming matching lines also hide.
+5. Remove chip and confirm lines show again.

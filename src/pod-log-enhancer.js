@@ -58,65 +58,130 @@ function ensureStyles() {
   document.head.appendChild(style);
 }
 
+function isLineElement(node) {
+  return LOG_LINE_SELECTORS.some((selector) => node.matches(selector));
+}
+
+function findLineElements(node) {
+  const found = [];
+  if (!(node instanceof HTMLElement)) return found;
+  if (isLineElement(node)) found.push(node);
+
+  const selector = LOG_LINE_SELECTORS.join(",");
+  found.push(...node.querySelectorAll(selector));
+  return found;
+}
+
 class PodLogEnhancer {
   constructor() {
     this.hiddenTerms = loadHiddenTerms();
-    this.observer = null;
+    this.rootObserver = null;
+    this.logObserver = null;
     this.panel = null;
     this.chips = null;
     this.hostRoot = null;
+    this.pendingLines = new Set();
+    this.flushScheduled = false;
   }
 
   activate() {
     ensureStyles();
-    this.hostRoot = queryFirst(POD_LOG_ROOT_SELECTORS);
-    this.injectOrMovePanel();
-    this.applyToAllLines(this.hostRoot || document.body);
+    this.attachToCurrentRoot();
 
-    this.observer = new MutationObserver((mutations) => {
-      const maybeHost = queryFirst(POD_LOG_ROOT_SELECTORS);
-      if (maybeHost && maybeHost !== this.hostRoot) {
-        this.hostRoot = maybeHost;
+    // watch only for pod log root mount/unmount; avoid expensive per-node full document rescans
+    this.rootObserver = new MutationObserver(() => {
+      const nextRoot = queryFirst(POD_LOG_ROOT_SELECTORS);
+      if (nextRoot !== this.hostRoot) {
+        this.detachLogObserver();
+        this.hostRoot = nextRoot;
         this.injectOrMovePanel();
-        this.applyToAllLines(this.hostRoot);
-      }
-
-      for (const mutation of mutations) {
-        mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof HTMLElement)) return;
-          if (!this.isInsidePodLogs(node) && !this.containsPodLogs(node)) return;
-          this.applyToAllLines(node);
-        });
+        this.attachLogObserver();
+        this.enqueueRootLines();
       }
     });
 
-    this.observer.observe(document.body, { childList: true, subtree: true });
+    this.rootObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   deactivate() {
-    if (this.observer) this.observer.disconnect();
-    this.observer = null;
+    if (this.rootObserver) this.rootObserver.disconnect();
+    this.rootObserver = null;
+    this.detachLogObserver();
+
     if (this.panel) this.panel.remove();
     this.panel = null;
     this.chips = null;
     this.hostRoot = null;
+    this.pendingLines.clear();
+    this.flushScheduled = false;
   }
 
-  containsPodLogs(node) {
-    return POD_LOG_ROOT_SELECTORS.some((selector) => Boolean(node.querySelector(selector)));
+  attachToCurrentRoot() {
+    this.hostRoot = queryFirst(POD_LOG_ROOT_SELECTORS);
+    this.injectOrMovePanel();
+    this.attachLogObserver();
+    this.enqueueRootLines();
   }
 
-  isInsidePodLogs(node) {
-    return POD_LOG_ROOT_SELECTORS.some((selector) => node.matches(selector) || Boolean(node.closest(selector)));
+  attachLogObserver() {
+    if (!this.hostRoot) return;
+
+    this.logObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          const lines = findLineElements(node);
+          for (const line of lines) {
+            this.pendingLines.add(line);
+          }
+        }
+      }
+
+      this.scheduleFlush();
+    });
+
+    this.logObserver.observe(this.hostRoot, { childList: true, subtree: true });
   }
 
-  applyToAllLines(root) {
-    const selectors = unique(LOG_LINE_SELECTORS).join(",");
-    const lines = Array.from(root.querySelectorAll(selectors));
-    for (const line of lines) {
-      if (!this.isInsidePodLogs(line)) continue;
+  detachLogObserver() {
+    if (this.logObserver) this.logObserver.disconnect();
+    this.logObserver = null;
+  }
+
+  enqueueRootLines() {
+    if (!this.hostRoot) return;
+    const selector = LOG_LINE_SELECTORS.join(",");
+    for (const line of this.hostRoot.querySelectorAll(selector)) {
+      this.pendingLines.add(line);
+    }
+    this.scheduleFlush();
+  }
+
+  scheduleFlush() {
+    if (this.flushScheduled) return;
+    this.flushScheduled = true;
+
+    const run = () => {
+      this.flushScheduled = false;
+      this.flushPendingLines();
+    };
+
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(run);
+      return;
+    }
+
+    setTimeout(run, 0);
+  }
+
+  flushPendingLines() {
+    if (!this.pendingLines.size) return;
+
+    for (const line of this.pendingLines) {
       this.decorateLine(line);
     }
+
+    this.pendingLines.clear();
   }
 
   decorateLine(line) {
@@ -131,6 +196,10 @@ class PodLogEnhancer {
     } else {
       line.style.removeProperty("display");
     }
+  }
+
+  refreshVisibleLines() {
+    this.enqueueRootLines();
   }
 
   injectOrMovePanel() {
@@ -165,7 +234,7 @@ class PodLogEnhancer {
       saveHiddenTerms(this.hiddenTerms);
       input.value = "";
       this.renderChips();
-      this.applyToAllLines(this.hostRoot || document.body);
+      this.refreshVisibleLines();
     };
 
     input.addEventListener("keydown", (event) => {
@@ -197,7 +266,7 @@ class PodLogEnhancer {
         this.hiddenTerms = this.hiddenTerms.filter((t) => t !== term);
         saveHiddenTerms(this.hiddenTerms);
         this.renderChips();
-        this.applyToAllLines(this.hostRoot || document.body);
+        this.refreshVisibleLines();
       };
       this.chips.appendChild(chip);
     });
