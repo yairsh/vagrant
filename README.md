@@ -1,50 +1,45 @@
 # OpenLens Pod Log Controls Plugin (OpenLens 6.5.2-366)
 
-Understood — you mean OpenLens gets stuck during **install**.
+If OpenLens is stuck on **"Unpacking extension openlens-pod-log-controls@..."**, this update targets that directly.
 
-This update adds install-compat fixes and stronger verification before you try installing:
+## What changed to fix unpacking stalls
 
-- CommonJS + `default` exports for extension entry classes (improves loader compatibility).
-- `npm run verify` now checks export shape + package contents.
-- Recommended `.tgz` install flow (faster and less likely to hang than folder install).
+- Switched to a **minimal deterministic tarball** builder (manual `tar`) instead of `npm pack`.
+- Bundle now contains only required files (`package.json`, `README.md`, `src/*.js`).
+- Added exact compatibility entry for your OpenLens build: `6.5.2-366`.
 
-## Install steps (recommended)
+## Recommended install path
 
-1. Build package tarball:
+1. Build tarball:
 
    ```bash
    npm run bundle
    ```
 
 2. In OpenLens: **Extensions** -> **Install from file**.
-3. Pick `dist-bundle/openlens-pod-log-controls-0.3.3.tgz`.
+3. Select: `dist-bundle/openlens-pod-log-controls-0.3.4.tgz`.
 
-## How to verify before install
+## Verify before install
 
 ```bash
 npm run verify
 ```
 
-It checks:
-- JS syntax
-- runtime helper behavior
-- extension export compatibility (`module.exports` + `.default`)
-- tarball generation
-- required files in tarball
+This checks syntax, runtime helper logic, export compatibility, tarball contents, and removes temporary bundle output after verification.
 
-## If OpenLens still hangs while installing
+## If it still hangs on "Unpacking extension"
 
-1. Restart OpenLens fully.
-2. Delete previous failed version from Extensions page (if listed).
-3. Re-run `npm run bundle` and install the new `.tgz`.
-4. Check OpenLens logs from terminal launch:
-   - Linux: run `openlens` in terminal and watch errors during install.
+1. Remove older versions of this extension in OpenLens extensions page.
+2. Fully quit OpenLens.
+3. Reopen OpenLens and install the new `0.3.4` tarball.
+4. Launch OpenLens from terminal and inspect logs while installing:
+   - Linux: `openlens`
 
 ## Runtime verification in OpenLens
 
 After successful install:
-1. Open a pod logs tab.
-2. Add filter term `healthcheck`.
+1. Open Pod logs.
+2. Add `healthcheck` to Log Filters.
 3. Confirm old matching lines hide.
-4. Confirm new streaming matching lines also hide.
-5. Remove chip and confirm lines show again.
+4. Confirm new matching streamed lines hide.
+5. Remove chip and confirm visibility returns.

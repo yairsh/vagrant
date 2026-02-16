@@ -37,4 +37,7 @@ for required in \
   fi
 done
 
+# Keep workspace clean after verify
+rm -rf dist-bundle
+
 echo "Verification passed"
