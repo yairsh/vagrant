@@ -22,16 +22,16 @@ cat /tmp/openlens_bundle.out
 TARBALL_PATH="$(awk '{print $2}' /tmp/openlens_bundle.out)"
 
 echo "[5/5] Verify tarball contents"
-tar -tzf "$TARBALL_PATH" | sed 's#^package/##' | sort
+tar -tzf "$TARBALL_PATH" | sort
 
 for required in \
-  package/src/main.js \
-  package/src/renderer.js \
-  package/src/log-levels.js \
-  package/src/pod-log-enhancer.js \
-  package/package.json
+  ./package.json \
+  ./src/main.js \
+  ./src/renderer.js \
+  ./src/log-levels.js \
+  ./src/pod-log-enhancer.js
   do
-  if ! tar -tzf "$TARBALL_PATH" | grep -q "$required"; then
+  if ! tar -tzf "$TARBALL_PATH" | grep -q "^${required}$"; then
     echo "ERROR: missing from tarball: $required" >&2
     exit 1
   fi
