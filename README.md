@@ -1,21 +1,12 @@
 # OpenLens Pod Log Controls Plugin (OpenLens 6.5.2-366)
 
-Thanks for the details. If OpenLens is stuck on:
+If OpenLens is stuck on:
 
-> Unpacking extension openlens-pod-log-controls@0.3.4
+> Unpacking extension openlens-pod-log-controls@...
 
-this build switches packaging again to the **canonical npm pack format** (top-level `package/`), which is what most extension installers expect.
+use one of these **alternative install methods**.
 
-## What changed in 0.3.5
-
-- Bundle generation now uses `npm pack` (canonical npm tarball layout).
-- Tarball includes only minimal files via `files` whitelist:
-  - `package/package.json`
-  - `package/src/*.js`
-  - `package/README.md`
-- Verification now asserts canonical `package/...` paths.
-
-## Build/install
+## Method A (tgz) - canonical npm bundle
 
 1. Build tarball:
 
@@ -23,8 +14,32 @@ this build switches packaging again to the **canonical npm pack format** (top-le
    npm run bundle
    ```
 
-2. In OpenLens: **Extensions** -> **Install from file**
-3. Select: `dist-bundle/openlens-pod-log-controls-0.3.5.tgz`
+2. Install in OpenLens -> **Extensions** -> **Install from file**.
+3. Select `dist-bundle/openlens-pod-log-controls-0.3.6.tgz`.
+
+## Method B (no unpacking in OpenLens) - install unpacked folder directly
+
+This bypasses OpenLens tar unpack step entirely.
+
+### Automatic (macOS/Linux)
+
+```bash
+npm run install:local
+```
+
+It copies the unpacked extension to:
+- macOS: `~/Library/Application Support/OpenLens/lens-extensions/openlens-pod-log-controls`
+- Linux: `~/.config/OpenLens/lens-extensions/openlens-pod-log-controls`
+
+Then fully restart OpenLens.
+
+### Manual
+
+```bash
+npm run bundle:dir
+```
+
+Then copy `dist-unpacked/openlens-pod-log-controls` into your OpenLens `lens-extensions` directory and restart OpenLens.
 
 ## Verify before install
 
@@ -32,11 +47,17 @@ this build switches packaging again to the **canonical npm pack format** (top-le
 npm run verify
 ```
 
-## If it still hangs on unpacking
+Checks:
+- JS syntax
+- helper runtime behavior
+- export shape (`module.exports` + `.default`)
+- tgz content layout
 
-1. Remove old failed entries in OpenLens extensions page.
-2. Quit OpenLens completely.
-3. Delete temp Lens extension cache folder then relaunch:
-   - macOS: `~/Library/Application Support/OpenLens/lens-extensions`
-4. Install `0.3.5` tarball.
-5. If still failing, launch OpenLens from terminal and share the next error line after "Unpacking extension...".
+## Runtime verification in OpenLens
+
+After install:
+1. Open Pod logs.
+2. Add filter term `healthcheck`.
+3. Confirm old matching lines hide.
+4. Confirm new matching streamed lines hide.
+5. Remove chip and confirm visibility returns.
