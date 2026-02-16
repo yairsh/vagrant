@@ -1,19 +1,19 @@
 # OpenLens Pod Log Controls Plugin (OpenLens 6.5.2-366)
 
-If OpenLens says:
+Thanks for the details. If OpenLens is stuck on:
 
-> invalid extension bundle, package.json not found
+> Unpacking extension openlens-pod-log-controls@0.3.4
 
-it means the tarball layout is wrong for OpenLens. This update fixes that by placing `package.json` at the **archive root**.
+this build switches packaging again to the **canonical npm pack format** (top-level `package/`), which is what most extension installers expect.
 
-## What changed
+## What changed in 0.3.5
 
-- Bundle format changed to root layout:
-  - `./package.json`
-  - `./README.md`
-  - `./src/*.js`
-- Removed nested `package/` tarball layout.
-- Verification now explicitly checks root-level `./package.json` in the tarball.
+- Bundle generation now uses `npm pack` (canonical npm tarball layout).
+- Tarball includes only minimal files via `files` whitelist:
+  - `package/package.json`
+  - `package/src/*.js`
+  - `package/README.md`
+- Verification now asserts canonical `package/...` paths.
 
 ## Build/install
 
@@ -23,9 +23,8 @@ it means the tarball layout is wrong for OpenLens. This update fixes that by pla
    npm run bundle
    ```
 
-2. Install in OpenLens:
-   - **Extensions** -> **Install from file**
-   - Select `dist-bundle/openlens-pod-log-controls-0.3.4.tgz`
+2. In OpenLens: **Extensions** -> **Install from file**
+3. Select: `dist-bundle/openlens-pod-log-controls-0.3.5.tgz`
 
 ## Verify before install
 
@@ -33,8 +32,11 @@ it means the tarball layout is wrong for OpenLens. This update fixes that by pla
 npm run verify
 ```
 
-This verifies:
-- JS syntax
-- helper runtime behavior
-- export shape (`module.exports` + `.default`)
-- tarball includes required root files (including `./package.json`)
+## If it still hangs on unpacking
+
+1. Remove old failed entries in OpenLens extensions page.
+2. Quit OpenLens completely.
+3. Delete temp Lens extension cache folder then relaunch:
+   - macOS: `~/Library/Application Support/OpenLens/lens-extensions`
+4. Install `0.3.5` tarball.
+5. If still failing, launch OpenLens from terminal and share the next error line after "Unpacking extension...".

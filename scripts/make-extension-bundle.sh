@@ -5,20 +5,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 OUT_DIR="${1:-dist-bundle}"
-VERSION="$(node -p "require('./package.json').version")"
-NAME="$(node -p "require('./package.json').name")"
-TARBALL_NAME="${NAME}-${VERSION}.tgz"
+mkdir -p "$OUT_DIR"
 
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
-
-# IMPORTANT: OpenLens expects package.json at archive root (not under package/).
-mkdir -p "$TMP_DIR/src" "$OUT_DIR"
-cp package.json "$TMP_DIR/package.json"
-cp README.md "$TMP_DIR/README.md"
-cp src/*.js "$TMP_DIR/src/"
-
-# Build a deterministic minimal tarball for OpenLens install.
-tar -czf "$OUT_DIR/$TARBALL_NAME" -C "$TMP_DIR" .
+# Use npm's canonical pack format for maximum compatibility with OpenLens.
+# This creates a tarball with a top-level `package/` folder exactly like npm registry packages.
+npm pack --silent --pack-destination "$OUT_DIR" >/tmp/openlens_pack_name.out
+TARBALL_NAME="$(cat /tmp/openlens_pack_name.out | tail -n 1)"
 
 echo "Created: $OUT_DIR/$TARBALL_NAME"

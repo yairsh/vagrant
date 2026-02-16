@@ -25,11 +25,11 @@ echo "[5/5] Verify tarball contents"
 tar -tzf "$TARBALL_PATH" | sort
 
 for required in \
-  ./package.json \
-  ./src/main.js \
-  ./src/renderer.js \
-  ./src/log-levels.js \
-  ./src/pod-log-enhancer.js
+  package/package.json \
+  package/src/main.js \
+  package/src/renderer.js \
+  package/src/log-levels.js \
+  package/src/pod-log-enhancer.js
   do
   if ! tar -tzf "$TARBALL_PATH" | grep -q "^${required}$"; then
     echo "ERROR: missing from tarball: $required" >&2

@@ -1,9 +1,13 @@
 {
   "name": "openlens-pod-log-controls",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "OpenLens extension that colorizes pod log levels and hides lines based on multiple text filters.",
   "main": "src/main.js",
   "renderer": "src/renderer.js",
+  "files": [
+    "src/*.js",
+    "README.md"
+  ],
   "scripts": {
     "build": "echo 'No build step required (plain JS extension)'",
     "check": "node -e \"require('./src/log-levels.js'); require('./src/pod-log-enhancer.js'); console.log('ok')\"",
